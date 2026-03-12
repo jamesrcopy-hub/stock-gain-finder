@@ -11,15 +11,74 @@ st.set_page_config(page_title="Stock Gain Finder", page_icon="📈", layout="cen
 
 st.markdown("""
 <style>
-  .stApp { background-color: #0f172a; color: #f1f5f9; }
+  /* Force dark theme regardless of system setting */
+  html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"],
+  .stApp, section.main, .main .block-container {
+    background-color: #0f172a !important;
+    color: #f1f5f9 !important;
+  }
+  /* Top bar */
+  [data-testid="stHeader"] {
+    background-color: #0f172a !important;
+    border-bottom: 1px solid #1e293b !important;
+  }
+  /* Sidebar (if ever used) */
+  [data-testid="stSidebar"] { background-color: #0f172a !important; }
+  /* All text */
+  p, span, label, div { color: #f1f5f9 !important; }
+  /* Inputs */
+  input, textarea, [data-baseweb="input"] input {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #334155 !important;
+    border-radius: 8px !important;
+  }
+  /* All buttons */
+  .stButton > button {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #334155 !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+  }
+  .stButton > button:hover {
+    background-color: #334155 !important;
+    border-color: #10b981 !important;
+    color: #10b981 !important;
+  }
+  /* Find Peak Gain button — make it stand out */
+  .stButton > button[kind="secondary"]:last-of-type,
+  div[data-testid="stButton"] > button {
+    background-color: #1e293b !important;
+  }
+  /* Date pickers */
+  [data-testid="stDateInput"] input {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #334155 !important;
+  }
+  /* Download button */
+  .stDownloadButton > button {
+    background-color: #1e40af !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+  }
+  .stDownloadButton > button:hover {
+    background-color: #1d4ed8 !important;
+  }
+  /* Spinner and alerts */
+  .stAlert { background-color: #1e293b !important; }
   .block-container { max-width: 780px; padding-top: 2rem; }
+  /* Cards */
   .card {
     background: #1e293b; border: 1px solid #334155; border-radius: 10px;
     padding: 14px 16px; margin-bottom: 4px;
   }
-  .card-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .card-label { font-size: 11px; color: #64748b !important; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
   .card-val { font-size: 22px; font-weight: 700; }
-  .card-sub { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+  .card-sub { font-size: 11px; color: #94a3b8 !important; margin-top: 3px; }
   .citation-box {
     background: #1e293b; border: 1px solid #334155; border-radius: 10px;
     padding: 16px; margin-top: 12px;
