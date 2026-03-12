@@ -211,13 +211,26 @@ if st.session_state.selected_ticker:
 st.markdown(f"<p style='color:{t['text2']};font-size:13px;font-weight:600;margin-top:20px;margin-bottom:6px'>STEP 2 — PICK YOUR DATE RANGE</p>", unsafe_allow_html=True)
 col1, col2 = st.columns(2)
 with col1:
-    start_date = st.date_input("Start Date", value=None,
-                                min_value=datetime.date(1980, 1, 1),
-                                max_value=datetime.date.today())
+    start_str = st.text_input("Start Date", placeholder="DD/MM/YYYY", label_visibility="visible")
 with col2:
-    end_date = st.date_input("End Date", value=None,
-                              min_value=datetime.date(1980, 1, 1),
-                              max_value=datetime.date.today())
+    end_str = st.text_input("End Date", placeholder="DD/MM/YYYY", label_visibility="visible")
+
+# Parse typed dates
+def parse_date(s):
+    for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%d/%m/%y"):
+        try:
+            return datetime.datetime.strptime(s.strip(), fmt).date()
+        except:
+            continue
+    return None
+
+start_date = parse_date(start_str) if start_str else None
+end_date   = parse_date(end_str)   if end_str   else None
+
+if start_str and not start_date:
+    st.warning("Start date format not recognised — please use DD/MM/YYYY e.g. 03/01/2020")
+if end_str and not end_date:
+    st.warning("End date format not recognised — please use DD/MM/YYYY e.g. 12/03/2026")
 
 st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
 run_clicked = st.button("🔍 Find Peak Gain", type="primary")
