@@ -9,118 +9,48 @@ from difflib import SequenceMatcher
 # ── Page config ───────────────────────────────────────────────
 st.set_page_config(page_title="Stock Gain Finder", page_icon="📈", layout="centered")
 
-# ── Theme definitions ─────────────────────────────────────────
-THEMES = {
-    "dark": {
-        "bg":          "#0f172a",
-        "bg2":         "#1e293b",
-        "border":      "#334155",
-        "text":        "#f1f5f9",
-        "text2":       "#94a3b8",
-        "text3":       "#64748b",
-        "accent":      "#10b981",
-        "amber":       "#f59e0b",
-        "link":        "#60a5fa",
-        "chart_bg":    "#0f172a",
-        "chart_grid":  "#1e293b",
-        "chart_tick":  "#64748b",
-        "dl_btn":      "#1e40af",
-        "dl_btn_hover":"#1d4ed8",
-        "toggle_label":"☀️ Light mode",
-    },
-    "light": {
-        "bg":          "#f8fafc",
-        "bg2":         "#ffffff",
-        "border":      "#e2e8f0",
-        "text":        "#0f172a",
-        "text2":       "#475569",
-        "text3":       "#94a3b8",
-        "accent":      "#059669",
-        "amber":       "#d97706",
-        "link":        "#2563eb",
-        "chart_bg":    "#ffffff",
-        "chart_grid":  "#f1f5f9",
-        "chart_tick":  "#94a3b8",
-        "dl_btn":      "#2563eb",
-        "dl_btn_hover":"#1d4ed8",
-        "toggle_label":"🌙 Dark mode",
-    }
-}
-
-# ── Initialise session state ──────────────────────────────────
-for key, val in [("selected_ticker", ""), ("selected_name", ""),
-                 ("search_results", []), ("search_query", ""),
-                 ("theme", "dark")]:
-    if key not in st.session_state:
-        st.session_state[key] = val
-
-t = THEMES[st.session_state.theme]
-
-# ── Inject CSS based on current theme ────────────────────────
-st.markdown(f"""
+st.markdown("""
 <style>
-  html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"],
-  .stApp, section.main, .main .block-container {{
-    background-color: {t['bg']} !important;
-    color: {t['text']} !important;
-  }}
-  [data-testid="stHeader"] {{
-    background-color: {t['bg']} !important;
-    border-bottom: 1px solid {t['border']} !important;
-  }}
-  p, span, label, div {{ color: {t['text']} !important; }}
-  input, textarea, [data-baseweb="input"] input {{
-    background-color: {t['bg2']} !important;
-    color: {t['text']} !important;
-    border: 1px solid {t['border']} !important;
-    border-radius: 8px !important;
-  }}
-  .stButton > button {{
-    background-color: {t['bg2']} !important;
-    color: {t['text']} !important;
-    border: 1px solid {t['border']} !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
-  }}
-  .stButton > button:hover {{
-    background-color: {t['border']} !important;
-    border-color: {t['accent']} !important;
-    color: {t['accent']} !important;
-  }}
-  [data-testid="stDateInput"] input {{
-    background-color: {t['bg2']} !important;
-    color: {t['text']} !important;
-    border: 1px solid {t['border']} !important;
-  }}
-  .stDownloadButton > button {{
-    background-color: {t['dl_btn']} !important;
+  .block-container { max-width: 780px; padding-top: 2rem; }
+  .card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 4px;
+  }
+  .card-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .card-val { font-size: 22px; font-weight: 700; }
+  .card-sub { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+  .citation-box {
+    background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+    padding: 16px; margin-top: 12px;
+  }
+  .stDownloadButton > button {
+    background-color: #1e40af !important;
     color: #ffffff !important;
     border: none !important;
     border-radius: 8px !important;
     font-weight: 700 !important;
-  }}
-  .stDownloadButton > button:hover {{ background-color: {t['dl_btn_hover']} !important; }}
-  .stAlert {{ background-color: {t['bg2']} !important; }}
-  .block-container {{ max-width: 780px; padding-top: 2rem; }}
-  .card {{
-    background: {t['bg2']}; border: 1px solid {t['border']}; border-radius: 10px;
-    padding: 14px 16px; margin-bottom: 4px;
-  }}
-  .card-label {{ font-size: 11px; color: {t['text3']} !important; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }}
-  .card-val {{ font-size: 22px; font-weight: 700; }}
-  .card-sub {{ font-size: 11px; color: {t['text2']} !important; margin-top: 3px; }}
-  .citation-box {{
-    background: {t['bg2']}; border: 1px solid {t['border']}; border-radius: 10px;
-    padding: 16px; margin-top: 12px;
-  }}
+  }
+  .stDownloadButton > button:hover { background-color: #1d4ed8 !important; }
+  /* Fix calendar date numbers */
+  [data-baseweb="calendar"] button { color: #f1f5f9 !important; background: transparent !important; }
+  [data-baseweb="calendar"] div { color: #f1f5f9 !important; }
+  [data-baseweb="calendar"] span { color: #f1f5f9 !important; }
+  [role="gridcell"] button { color: #f1f5f9 !important; }
+  [aria-selected="true"] button { color: #ffffff !important; background-color: #10b981 !important; }
 </style>
 """, unsafe_allow_html=True)
+
+# ── Initialise session state ──────────────────────────────────
+for key, val in [("selected_ticker", ""), ("selected_name", ""),
+                 ("search_results", []), ("search_query", "")]:
+    if key not in st.session_state:
+        st.session_state[key] = val
 
 # ── Fuzzy search ──────────────────────────────────────────────
 def fuzzy_score(query, name, ticker):
     q = query.lower().strip()
-    name_score   = SequenceMatcher(None, q, name.lower()).ratio()
-    ticker_score = SequenceMatcher(None, q, ticker.lower()).ratio()
+    name_score    = SequenceMatcher(None, q, name.lower()).ratio()
+    ticker_score  = SequenceMatcher(None, q, ticker.lower()).ratio()
     starts_bonus  = 0.3  if name.lower().startswith(q) else 0
     contains_bonus = 0.15 if q in name.lower() else 0
     return max(name_score, ticker_score) + starts_bonus + contains_bonus
@@ -154,19 +84,12 @@ def get_suggestions(query):
     except:
         return []
 
-# ── Header row with toggle ────────────────────────────────────
-h_col, toggle_col = st.columns([5, 1])
-with h_col:
-    st.markdown(f"<h1 style='color:{t['accent']};margin-bottom:4px'>📈 Stock Gain Finder</h1>", unsafe_allow_html=True)
-    st.markdown(f"<p style='color:{t['text2']};margin-bottom:24px'>Find the peak gain for any stock between two dates.</p>", unsafe_allow_html=True)
-with toggle_col:
-    st.markdown("<div style='margin-top:18px'></div>", unsafe_allow_html=True)
-    if st.button(t["toggle_label"], key="theme_toggle"):
-        st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
-        st.rerun()
+# ── Header ────────────────────────────────────────────────────
+st.markdown("<h1 style='color:#10b981;margin-bottom:4px'>📈 Stock Gain Finder</h1>", unsafe_allow_html=True)
+st.markdown("<p style='color:#94a3b8;margin-bottom:24px'>Find the peak gain for any stock between two dates.</p>", unsafe_allow_html=True)
 
 # ── Step 1: Stock search ──────────────────────────────────────
-st.markdown(f"<p style='color:{t['text2']};font-size:13px;font-weight:600;margin-bottom:6px'>STEP 1 — FIND YOUR STOCK</p>", unsafe_allow_html=True)
+st.markdown("<p style='color:#94a3b8;font-size:13px;font-weight:600;margin-bottom:6px'>STEP 1 — FIND YOUR STOCK</p>", unsafe_allow_html=True)
 
 col_input, col_btn = st.columns([4, 1])
 with col_input:
@@ -185,7 +108,7 @@ if search_clicked and search_query:
         st.warning(f"No results found for '{search_query}'. Try a different spelling.")
 
 if st.session_state.search_results and not st.session_state.selected_ticker:
-    st.markdown(f"<p style='color:{t['text2']};font-size:13px;margin-bottom:4px'>Select a stock:</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#94a3b8;font-size:13px;margin-bottom:4px'>Select a stock:</p>", unsafe_allow_html=True)
     for m in st.session_state.search_results:
         label = f"{m['ticker']}  —  {m['name']}  ({m['exchange']})"
         if st.button(label, key=f"pick_{m['ticker']}"):
@@ -196,9 +119,9 @@ if st.session_state.search_results and not st.session_state.selected_ticker:
 
 if st.session_state.selected_ticker:
     st.markdown(
-        f"<div style='color:{t['accent']};font-weight:700;font-size:15px;margin:8px 0'>"
+        f"<div style='color:#10b981;font-weight:700;font-size:15px;margin:8px 0'>"
         f"✅ Selected: {st.session_state.selected_ticker} "
-        f"<span style='color:{t['text2']};font-weight:400;font-size:13px'>— {st.session_state.selected_name}</span>"
+        f"<span style='color:#94a3b8;font-weight:400;font-size:13px'>— {st.session_state.selected_name}</span>"
         f"</div>", unsafe_allow_html=True
     )
     if st.button("✕ Change stock", key="clear_ticker"):
@@ -208,7 +131,7 @@ if st.session_state.selected_ticker:
         st.rerun()
 
 # ── Step 2: Date range ────────────────────────────────────────
-st.markdown(f"<p style='color:{t['text2']};font-size:13px;font-weight:600;margin-top:20px;margin-bottom:6px'>STEP 2 — PICK YOUR DATE RANGE</p>", unsafe_allow_html=True)
+st.markdown("<p style='color:#94a3b8;font-size:13px;font-weight:600;margin-top:20px;margin-bottom:6px'>STEP 2 — PICK YOUR DATE RANGE</p>", unsafe_allow_html=True)
 col1, col2 = st.columns(2)
 with col1:
     start_date = st.date_input("Start Date", value=None,
@@ -261,11 +184,11 @@ if run_clicked:
                     # ── Cards ──────────────────────────────────
                     c1, c2, c3, c4, c5 = st.columns(5)
                     for col, label, val, sub, color in [
-                        (c1, "Start Price",    f"${start_price:,.2f}", start_date_str, t['text']),
-                        (c2, "Peak High",      f"${high_price:,.2f}",  high_date_str,  t['amber']),
-                        (c3, "% Gain",         f"+{pct_gain:.2f}%",    "",             t['accent']),
-                        (c4, "Multiple",       f"{multiple:.2f}x",     "",             t['text']),
-                        (c5, "$1,000 Becomes", f"${final_value:,.2f}", "",             t['accent']),
+                        (c1, "Start Price",    f"${start_price:,.2f}", start_date_str, "#f1f5f9"),
+                        (c2, "Peak High",      f"${high_price:,.2f}",  high_date_str,  "#f59e0b"),
+                        (c3, "% Gain",         f"+{pct_gain:.2f}%",    "",             "#10b981"),
+                        (c4, "Multiple",       f"{multiple:.2f}x",     "",             "#f1f5f9"),
+                        (c5, "$1,000 Becomes", f"${final_value:,.2f}", "",             "#10b981"),
                     ]:
                         with col:
                             st.markdown(
@@ -277,15 +200,15 @@ if run_clicked:
                             )
 
                     st.markdown(
-                        f"<div style='color:{t['text2']};font-size:12px;margin:12px 0'>"
-                        f"Source: <a href='{source_url}' target='_blank' style='color:{t['link']}'>{source_url}</a></div>",
+                        f"<div style='color:#94a3b8;font-size:12px;margin:12px 0'>"
+                        f"Source: <a href='{source_url}' target='_blank' style='color:#60a5fa'>{source_url}</a></div>",
                         unsafe_allow_html=True
                     )
 
                     # ── Chart ──────────────────────────────────
                     fig, ax = plt.subplots(figsize=(11, 4))
-                    fig.patch.set_facecolor(t['chart_bg'])
-                    ax.set_facecolor(t['chart_bg'])
+                    fig.patch.set_facecolor("#0f172a")
+                    ax.set_facecolor("#0f172a")
 
                     line_color = "#10b981" if end_price >= start_price else "#ef4444"
                     ax.plot(dates, closes.values, color=line_color, linewidth=1.8, zorder=3)
@@ -296,16 +219,16 @@ if run_clicked:
                     ax.xaxis.set_major_locator(mdates.AutoDateLocator())
                     fig.autofmt_xdate(rotation=30, ha="right")
                     for spine in ax.spines.values():
-                        spine.set_edgecolor(t['border'])
-                    ax.tick_params(colors=t['chart_tick'], labelsize=9)
+                        spine.set_edgecolor("#1e293b")
+                    ax.tick_params(colors="#64748b", labelsize=9)
                     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"${x:,.2f}"))
-                    ax.grid(axis="y", color=t['chart_grid'], linewidth=0.8, zorder=1)
+                    ax.grid(axis="y", color="#1e293b", linewidth=0.8, zorder=1)
                     plt.tight_layout()
                     st.pyplot(fig)
 
                     # ── Download button ────────────────────────
                     buf = io.BytesIO()
-                    fig.savefig(buf, format="png", dpi=150, facecolor=t['chart_bg'], bbox_inches="tight")
+                    fig.savefig(buf, format="png", dpi=150, facecolor="#0f172a", bbox_inches="tight")
                     buf.seek(0)
                     plt.close(fig)
                     st.download_button(
@@ -325,15 +248,15 @@ if run_clicked:
                     )
                     st.markdown(
                         f"<div class='citation-box'>"
-                        f"<div style='color:{t['text3']};font-size:11px;text-transform:uppercase;"
+                        f"<div style='color:#64748b;font-size:11px;text-transform:uppercase;"
                         f"letter-spacing:1px;margin-bottom:8px'>\U0001f4cb Citation — select all and copy</div>"
-                        f"<pre style='color:{t['text']};font-size:13px;white-space:pre-wrap;"
+                        f"<pre style='color:#cbd5e1;font-size:13px;white-space:pre-wrap;"
                         f"font-family:monospace'>{citation}</pre>"
                         f"</div>", unsafe_allow_html=True
                     )
                     st.markdown(
-                        f"<p style='color:{t['text3']};font-size:11px;text-align:center;margin-top:8px'>"
-                        f"Always verify figures independently for legal use.</p>",
+                        "<p style='color:#475569;font-size:11px;text-align:center;margin-top:8px'>"
+                        "Always verify figures independently for legal use.</p>",
                         unsafe_allow_html=True
                     )
 
