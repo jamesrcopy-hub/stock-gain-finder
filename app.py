@@ -11,18 +11,8 @@ st.set_page_config(page_title="Stock Gain Finder", page_icon="📈", layout="cen
 
 st.markdown("""
 <style>
-  body, .stApp { background-color: #0f172a; color: #f1f5f9; }
+  .stApp { background-color: #0f172a; color: #f1f5f9; }
   .block-container { max-width: 780px; padding-top: 2rem; }
-  .stTextInput > div > div > input,
-  .stDateInput > div > div > input {
-    background: #1e293b; color: #f1f5f9; border: 1px solid #334155; border-radius: 8px;
-  }
-  .stButton > button {
-    background: #10b981; color: white; border: none; border-radius: 8px;
-    font-weight: 700; font-size: 15px; width: 100%; padding: 10px;
-  }
-  .stButton > button:hover { background: #059669; }
-  div[data-testid="stHorizontalBlock"] { gap: 12px; }
   .card {
     background: #1e293b; border: 1px solid #334155; border-radius: 10px;
     padding: 14px 16px; margin-bottom: 4px;
@@ -32,15 +22,20 @@ st.markdown("""
   .card-sub { font-size: 11px; color: #94a3b8; margin-top: 3px; }
   .citation-box {
     background: #1e293b; border: 1px solid #334155; border-radius: 10px;
-    padding: 16px; margin-top: 12px; font-family: monospace;
+    padding: 16px; margin-top: 12px;
   }
-  .citation-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-family: system-ui; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Header ────────────────────────────────────────────────────
-st.markdown("<h1 style='color:#10b981;margin-bottom:4px'>📈 Stock Gain Finder</h1>", unsafe_allow_html=True)
-st.markdown("<p style='color:#94a3b8;margin-bottom:24px'>Find the peak gain for any stock between two dates.</p>", unsafe_allow_html=True)
+# ── Initialise session state ──────────────────────────────────
+if "selected_ticker" not in st.session_state:
+    st.session_state.selected_ticker = ""
+if "selected_name" not in st.session_state:
+    st.session_state.selected_name = ""
+if "search_results" not in st.session_state:
+    st.session_state.search_results = []
+if "search_query" not in st.session_state:
+    st.session_state.search_query = ""
 
 # ── Ticker search ─────────────────────────────────────────────
 def get_suggestions(query):
@@ -61,33 +56,41 @@ def get_suggestions(query):
     except:
         return []
 
+# ── Header ────────────────────────────────────────────────────
+st.markdown("<h1 style='color:#10b981;margin-bottom:4px'>📈 Stock Gain Finder</h1>", unsafe_allow_html=True)
+st.markdown("<p style='color:#94a3b8;margin-bottom:24px'>Find the peak gain for any stock between two dates.</p>", unsafe_allow_html=True)
+
 # ── Step 1: Stock search ──────────────────────────────────────
 st.markdown("<p style='color:#94a3b8;font-size:13px;font-weight:600;margin-bottom:6px'>STEP 1 — FIND YOUR STOCK</p>", unsafe_allow_html=True)
+
 col_input, col_btn = st.columns([4, 1])
 with col_input:
-    search_query = st.text_input("", placeholder="Type company name or ticker e.g. Apple, TSLA...", label_visibility="collapsed")
+    search_query = st.text_input("", placeholder="Type company name or ticker e.g. Apple, TSLA...",
+                                  label_visibility="collapsed", key="search_input")
 with col_btn:
-    search_clicked = st.button("Search")
+    search_clicked = st.button("Search", use_container_width=True)
 
-# Store selected ticker across reruns
-if "selected_ticker" not in st.session_state:
-    st.session_state.selected_ticker = ""
-    st.session_state.selected_name = ""
-
+# Run search and store results in session state
 if search_clicked and search_query:
     with st.spinner("Searching..."):
-        matches = get_suggestions(search_query)
-    if not matches:
-        st.warning(f"No results found for '{search_query}'. Try a different name or ticker.")
-    else:
-        st.markdown("<p style='color:#94a3b8;font-size:13px;margin-bottom:4px'>Select a stock:</p>", unsafe_allow_html=True)
-        for m in matches:
-            label = f"{m['ticker']}  —  {m['name']}  ({m['exchange']})"
-            if st.button(label, key=f"pick_{m['ticker']}"):
-                st.session_state.selected_ticker = m["ticker"]
-                st.session_state.selected_name = m["name"]
-                st.rerun()
+        st.session_state.search_results = get_suggestions(search_query)
+        st.session_state.search_query = search_query
+        # Clear previous selection when doing a new search
+        st.session_state.selected_ticker = ""
+        st.session_state.selected_name = ""
 
+# Show search results as buttons — stored in session state so they persist
+if st.session_state.search_results and not st.session_state.selected_ticker:
+    st.markdown("<p style='color:#94a3b8;font-size:13px;margin-bottom:4px'>Select a stock:</p>", unsafe_allow_html=True)
+    for m in st.session_state.search_results:
+        label = f"{m['ticker']}  —  {m['name']}  ({m['exchange']})"
+        if st.button(label, key=f"pick_{m['ticker']}"):
+            st.session_state.selected_ticker = m["ticker"]
+            st.session_state.selected_name = m["name"]
+            st.session_state.search_results = []  # hide results once selected
+            st.rerun()
+
+# Show currently selected stock
 if st.session_state.selected_ticker:
     st.markdown(
         f"<div style='color:#10b981;font-weight:700;font-size:15px;margin:8px 0'>"
@@ -96,18 +99,27 @@ if st.session_state.selected_ticker:
         f"</div>",
         unsafe_allow_html=True
     )
+    if st.button("✕ Change stock", key="clear_ticker"):
+        st.session_state.selected_ticker = ""
+        st.session_state.selected_name = ""
+        st.session_state.search_results = []
+        st.rerun()
 
 # ── Step 2: Date range ────────────────────────────────────────
-st.markdown("<p style='color:#94a3b8;font-size:13px;font-weight:600;margin-top:16px;margin-bottom:6px'>STEP 2 — PICK YOUR DATE RANGE</p>", unsafe_allow_html=True)
+st.markdown("<p style='color:#94a3b8;font-size:13px;font-weight:600;margin-top:20px;margin-bottom:6px'>STEP 2 — PICK YOUR DATE RANGE</p>", unsafe_allow_html=True)
 col1, col2 = st.columns(2)
 with col1:
-    start_date = st.date_input("Start Date", value=None, min_value=datetime.date(1980, 1, 1), max_value=datetime.date.today())
+    start_date = st.date_input("Start Date", value=None,
+                                min_value=datetime.date(1980, 1, 1),
+                                max_value=datetime.date.today())
 with col2:
-    end_date = st.date_input("End Date", value=None, min_value=datetime.date(1980, 1, 1), max_value=datetime.date.today())
+    end_date = st.date_input("End Date", value=None,
+                              min_value=datetime.date(1980, 1, 1),
+                              max_value=datetime.date.today())
 
 # ── Step 3: Run ───────────────────────────────────────────────
 st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
-run_clicked = st.button("Find Peak Gain")
+run_clicked = st.button("Find Peak Gain", use_container_width=False)
 
 if run_clicked:
     sym = st.session_state.selected_ticker.strip().upper()
@@ -212,8 +224,9 @@ if run_clicked:
                     )
                     st.markdown(
                         f"<div class='citation-box'>"
-                        f"<div class='citation-label'>\U0001f4cb Citation — select all and copy</div>"
-                        f"<pre style='color:#cbd5e1;font-size:13px;white-space:pre-wrap'>{citation}</pre>"
+                        f"<div style='color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px'>"
+                        f"\U0001f4cb Citation — select all and copy</div>"
+                        f"<pre style='color:#cbd5e1;font-size:13px;white-space:pre-wrap;font-family:monospace'>{citation}</pre>"
                         f"</div>",
                         unsafe_allow_html=True
                     )
